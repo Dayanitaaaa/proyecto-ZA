@@ -4,6 +4,18 @@
 <h1 class="h3 mb-4 text-gray-800">Registrar Entrada de Inventario</h1>
 <p class="lead">Completa el siguiente formulario para registrar una nueva entrada de inventario.</p>
 
+{# Mostrar productos en bajo stock si existen #}
+{% if productos_bajo_stock %}
+  <div class="alert alert-warning">
+    <strong>¡Atención!</strong> Los siguientes productos están en bajo stock (≤ {{ umbral_bajo_stock }} unidades):<br>
+    <ul class="mb-0">
+      {% for p in productos_bajo_stock %}
+        <li><strong>{{ p.nombre }}</strong> (Stock: {{ p.stock }})</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
 <div class="row justify-content-center">
   <div class="col-md-7 col-lg-6">
     <form method="post" class="card card-body shadow border-0 p-4" style="background: #f8fafc;">

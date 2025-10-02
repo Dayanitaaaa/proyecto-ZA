@@ -5,6 +5,9 @@ from django.contrib import messages
 from .models import Producto, Categoria 
 from decimal import Decimal
 
+# UMBRAL DE BAJO STOCK
+UMBRAL_BAJO_STOCK = 5  # Debe ser igual al de core/views.py
+
 # Vistas principales para la gestión de productos y categorías.
 # Cada vista debe tener un comentario explicativo sobre su propósito y uso.
 # Si se agregan nuevas vistas, documentar su funcionalidad y parámetros importantes.
@@ -31,12 +34,17 @@ def lista_productos(request, categoria_slug=None):
             producto.colores_list = [c.strip() for c in re.split(r',|;|\|', producto.colores) if c.strip()]
         else:
             producto.colores_list = []
+        # Marcar si está en bajo stock o agotado
+        producto.bajo_stock = producto.stock <= UMBRAL_BAJO_STOCK
+        producto.agotado = producto.stock == 0
+        producto.disponible = producto.stock > 0
 
     return render(request, 'productos/lista_productos.html', {
         'productos': productos,
         'categorias': categorias,
         'categoria_seleccionada': categoria_seleccionada,
-        'titulo_pagina': titulo
+        'titulo_pagina': titulo,
+        'umbral_bajo_stock': UMBRAL_BAJO_STOCK,
     })
 
 
@@ -44,15 +52,24 @@ def detalle_producto(request, id, slug):
     """
     Muestra los detalles de un producto específico.
     """
-    producto = get_object_or_404(Producto, id=id, slug=slug, disponible=True)
+    producto = get_object_or_404(Producto, id=id, slug=slug)
+    # Marcar bajo_stock y forzar disponible=False si stock==0
+    producto.bajo_stock = producto.stock <= UMBRAL_BAJO_STOCK
+    if producto.stock == 0:
+        producto.disponible = False
     return render(request, 'productos/detalle_producto.html', {'producto': producto, 'titulo_pagina': producto.nombre})
 
 
 def add_to_cart_simple(request, product_id):
     """
     Vista simple para agregar un producto al carrito directamente desde la lista de productos.
+    No permite agregar si está en bajo stock.
     """
+    from productos.views import UMBRAL_BAJO_STOCK
     product = get_object_or_404(Producto, id=product_id)
+    if product.stock <= UMBRAL_BAJO_STOCK:
+        messages.warning(request, f"El producto '{product.nombre}' está bajo en stock y no puede ser agregado al carrito.")
+        return redirect(request.META.get('HTTP_REFERER', 'core:home'))
     cantidad = 1
 
     cart = request.session.get('cart', {})

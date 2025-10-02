@@ -37,8 +37,14 @@
             {% endif %}
 
             <div class="mt-4">
-                {# Aquí puedes añadir botones como "Añadir al carrito" o "Consultar" #}
-                <a href="#" class="btn btn-primary-custom btn-lg">Consultar Producto</a>
+                {% if producto.bajo_stock %}
+                  <span class="badge bg-warning mb-3">Bajo en stock</span>
+                {% endif %}
+                {% if producto.disponible and not producto.bajo_stock %}
+                  <a href="{% url 'productos:agregar-carrito-simple' producto.id %}" class="btn btn-primary-custom btn-lg">Añadir al carrito</a>
+                {% else %}
+                  <a href="#" class="btn btn-secondary btn-lg disabled" style="pointer-events:none;opacity:0.7;">No disponible para carrito</a>
+                {% endif %}
                 <a href="{% url 'productos:lista_productos' %}" class="btn btn-outline-secondary btn-lg ms-2">Volver al listado</a>
             </div>
 

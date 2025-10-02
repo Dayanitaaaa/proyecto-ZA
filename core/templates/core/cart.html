@@ -31,6 +31,9 @@
                                 </div>
                                 <div style="padding-left:18px; border-left:1px solid #ddd; min-width:220px;">
                                     <div style="font-size:1.13rem; font-weight:600; letter-spacing:0.5px; margin-bottom:8px;">{{ item.product.nombre }}</div>
+                                    {% if item.bajo_stock %}
+                                        <span class="badge bg-warning">Bajo en stock</span>
+                                    {% endif %}
                                     {% if item.colores_list %}
                                         <div style="font-size:1.01rem; color:#222; margin-bottom:8px;">
                                             {% for color in item.colores_list %}
@@ -46,20 +49,28 @@
                         </td>
                         <td style="vertical-align:middle;">${{ item.precio_unitario|floatformat:2 }}</td>
                         <td style="vertical-align:middle;">
-                            <form action="{% url 'core:update_cart' %}" method="post" class="d-flex align-items-center">
-                                {% csrf_token %}
-                                <input type="hidden" name="product_id" value="{{ item.product.id }}">
-                                <input type="number" name="cantidad" value="{{ item.cantidad }}" min="1" class="form-control form-control-sm text-center" style="width: 70px;">
-                                <button type="submit" class="btn btn-sm btn-outline-primary ms-2" title="Actualizar Cantidad">
-                                    <i class="fas fa-sync-alt"></i>
-                                </button>
-                            </form>
+                            {% if item.bajo_stock %}
+                                <span class="badge bg-warning">No disponible</span>
+                            {% else %}
+                                <form action="{% url 'core:update_cart' %}" method="post" class="d-flex align-items-center">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="product_id" value="{{ item.product.id }}">
+                                    <input type="number" name="cantidad" value="{{ item.cantidad }}" min="1" max="{{ item.product.stock }}" class="form-control form-control-sm text-center" style="width: 70px;">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary ms-2" title="Actualizar Cantidad">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
                         </td>
                         <td style="vertical-align:middle;">${{ item.subtotal|floatformat:2 }}</td>
                         <td style="vertical-align:middle;">
-                            <a href="{% url 'core:remove_from_cart' item.product.id %}" class="btn btn-sm btn-danger" title="Eliminar Producto">
-                                <i class="fas fa-trash-alt"></i>
-                            </a>
+                            {% if not item.bajo_stock %}
+                                <a href="{% url 'core:remove_from_cart' item.product.id %}" class="btn btn-sm btn-danger" title="Eliminar Producto">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                            {% else %}
+                                <span class="text-muted">No disponible</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

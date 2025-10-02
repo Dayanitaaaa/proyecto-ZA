@@ -69,7 +69,13 @@
               {% endif %}
               <div class="d-flex flex-column flex-sm-row gap-2 mt-2 justify-content-center justify-content-lg-start">
                 <a href="{{ producto.get_absolute_url }}" class="btn btn-sm btn-primary-custom">Ver Detalle</a>
-                <a href="{% url 'productos:agregar-carrito-simple' producto.id %}" class="btn btn-sm btn-success">Añadir al Carrito</a>
+                {% if producto.agotado %}
+                  <span class="btn btn-sm btn-danger disabled" style="pointer-events:none;opacity:0.8;">Agotado</span>
+                {% elif producto.bajo_stock %}
+                  <span class="btn btn-sm btn-warning disabled" style="pointer-events:none;opacity:0.8;">Bajo en stock</span>
+                {% else %}
+                  <a href="{% url 'productos:agregar-carrito-simple' producto.id %}" class="btn btn-sm btn-success">Añadir al Carrito</a>
+                {% endif %}
               </div>
             </div>
           </div>

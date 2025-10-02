@@ -224,13 +224,16 @@ def checkout_view(request):
     for product_id, item_data in cart.items():
         try:
             product = Producto.objects.get(id=product_id)
-            cantidad = item_data.get('cantidad', 1)
+            cantidad = int(item_data.get('cantidad', 1))  # Forzar a int
+            # Validar que la cantidad no supere el stock disponible
+            if cantidad > product.stock:
+                messages.error(request, f"No hay suficiente stock disponible para '{product.nombre}'. Stock actual: {product.stock}.")
+                return redirect('core:cart_view')
             precio_unitario = product.precio
             subtotal = precio_unitario * cantidad
             # Procesar colores como lista
             colores_list = []
             if hasattr(product, 'colores') and product.colores:
-                # Admite coma, punto y coma o barra vertical como separador
                 import re
                 colores_list = [c.strip() for c in re.split(r',|;|\|', product.colores) if c.strip()]
             productos_en_carrito.append({
@@ -261,11 +264,18 @@ def checkout_view(request):
             pedido.save()
 
             for item in productos_en_carrito:
+                # Descontar stock del producto
+                producto = item['product']
+                cantidad_comprada = item['cantidad']
+                producto.stock = max(producto.stock - cantidad_comprada, 0)
+                producto.save()
+                # Si el stock es menor o igual al umbral, marcar bajo stock (si tienes un campo, aquí lo puedes actualizar)
+                # Si no tienes un campo, la lógica de bajo stock se maneja en la presentación
                 ItemPedido.objects.create(
                     pedido=pedido,
-                    producto=item['product'],
+                    producto=producto,
                     precio=item['precio_unitario'],
-                    cantidad=item['cantidad']
+                    cantidad=cantidad_comprada
                 )
 
             del request.session['cart']
@@ -645,30 +655,37 @@ def usuario_eliminar_admin(request, pk):
 def cart_view(request):
     """
     Vista para mostrar el contenido del carrito.
+    Si algún producto está en bajo stock, muestra un aviso y lo deshabilita.
     """
+    from productos.views import UMBRAL_BAJO_STOCK
     cart = request.session.get('cart', {})
     productos_en_carrito = []
     total_carrito = Decimal('0.00')
     ids_a_eliminar = []
+    productos_bajo_stock = []
 
     for product_id, item_data in cart.items():
         try:
             product = Producto.objects.get(id=product_id)
-            cantidad = item_data.get('cantidad', 1)
+            # Siempre tomar la cantidad actualizada del carrito
+            cantidad = int(item_data.get('cantidad', 1))
             precio_unitario = product.precio
             subtotal = precio_unitario * cantidad
             # Procesar colores como lista
             colores_list = []
             if hasattr(product, 'colores') and product.colores:
-                # Admite coma, punto y coma o barra vertical como separador
                 import re
                 colores_list = [c.strip() for c in re.split(r',|;|\|', product.colores) if c.strip()]
+            bajo_stock = product.stock <= UMBRAL_BAJO_STOCK
+            if bajo_stock:
+                productos_bajo_stock.append(product)
             productos_en_carrito.append({
                 'product': product,
                 'cantidad': cantidad,
                 'precio_unitario': precio_unitario,
                 'subtotal': subtotal,
-                'colores_list': colores_list
+                'colores_list': colores_list,
+                'bajo_stock': bajo_stock,
             })
             total_carrito += subtotal
         except Producto.DoesNotExist:
@@ -682,10 +699,15 @@ def cart_view(request):
         request.session.modified = True
         messages.warning(request, "Uno o más productos en tu carrito ya no están disponibles y fueron eliminados.")
 
+    if productos_bajo_stock:
+        nombres = ', '.join([p.nombre for p in productos_bajo_stock])
+        messages.warning(request, f"Atención: Los siguientes productos están en bajo stock y no se pueden comprar: {nombres}")
+
     context = {
         'productos_en_carrito': productos_en_carrito,
         'total_carrito': total_carrito,
         'titulo_pagina': 'Tu Carrito de Compras',
+        'umbral_bajo_stock': UMBRAL_BAJO_STOCK,
     }
     return render(request, 'core/cart.html', context)
 
@@ -751,6 +773,7 @@ def remove_from_cart(request, product_id):
 def update_cart(request):
     """
     Vista para actualizar la cantidad de un producto en el carrito.
+    Asegura que la cantidad seleccionada se respete y no supere el stock disponible.
     """
     if request.method == 'POST':
         product_id = request.POST.get('product_id')
@@ -767,6 +790,16 @@ def update_cart(request):
         product_id_str = str(product_id)
 
         if product_id_str in cart:
+            # Validar que no se pida más stock del disponible
+            try:
+                producto = Producto.objects.get(id=product_id)
+                if new_cantidad > producto.stock:
+                    messages.error(request, f"No hay suficiente stock disponible para '{producto.nombre}'. Stock actual: {producto.stock}.")
+                    return redirect('core:cart_view')
+            except Producto.DoesNotExist:
+                messages.error(request, "El producto no existe.")
+                return redirect('core:cart_view')
+
             cart[product_id_str]['cantidad'] = new_cantidad
             request.session['cart'] = cart
             request.session.modified = True
@@ -990,12 +1023,17 @@ def entradas_salidas_admin(request):
     }
     return render(request, 'core/dashboard_entradas_salidas.html', context)
 
+# UMBRAL DE BAJO STOCK
+UMBRAL_BAJO_STOCK = 5  # Puedes ajustar este valor
+
 @admin_required(login_url='core:login')
 def registrar_entrada_inventario(request):
     """
     Vista para mostrar el formulario de registrar una nueva entrada de inventario.
+    Al registrar, muestra productos en bajo stock.
     """
     from core.models import EntradaInventario
+    from productos.models import Producto, StockProducto
     if request.method == 'POST':
         form = EntradaInventarioForm(request.POST)
         if form.is_valid():
@@ -1003,7 +1041,6 @@ def registrar_entrada_inventario(request):
             entrada.usuario = request.user
             entrada.save()
             # --- ACTUALIZAR STOCK GENERAL Y POR TALLA/COLOR ---
-            from productos.models import StockProducto
             producto = entrada.producto
             producto.stock += entrada.cantidad
             producto.save()
@@ -1017,12 +1054,23 @@ def registrar_entrada_inventario(request):
                 stock_detalle.cantidad += entrada.cantidad
                 stock_detalle.save()
             messages.success(request, 'Entrada de inventario registrada correctamente y stock actualizado.')
-            return redirect('core:entradas_salidas_admin')
+            # --- Mostrar productos en bajo stock tras registrar ---
+            productos_bajo_stock = Producto.objects.filter(stock__lte=UMBRAL_BAJO_STOCK, disponible=True)
+            if productos_bajo_stock.exists():
+                nombres = ', '.join([p.nombre for p in productos_bajo_stock])
+                messages.warning(request, f"Atención: Los siguientes productos están en bajo stock: {nombres}")
+            return redirect('core:registrar_entrada_inventario')
     else:
         form = EntradaInventarioForm()
+
+    # Mostrar productos en bajo stock siempre en la página
+    from productos.models import Producto
+    productos_bajo_stock = Producto.objects.filter(stock__lte=UMBRAL_BAJO_STOCK, disponible=True)
     context = {
         'form': form,
         'titulo_pagina': 'Registrar Entrada de Inventario',
+        'productos_bajo_stock': productos_bajo_stock,
+        'umbral_bajo_stock': UMBRAL_BAJO_STOCK,
     }
     return render(request, 'core/registrar_entrada_inventario.html', context)
 
