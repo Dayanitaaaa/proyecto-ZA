@@ -6,14 +6,12 @@ from django.conf import settings # Importa 'settings' para acceder a la configur
 from django.conf.urls.static import static # Importa 'static' para servir archivos estáticos/media en desarrollo
 
 urlpatterns = [
-    path('admin/', admin.site.urls), # Mapea la URL '/admin/' al panel de administración de Django.
+    path('admin/', admin.site.urls),
     path('', include('core.urls')),
-    path('productos/', include('productos.urls')), 
-   path('servicios/', include(('servicios.urls', 'servicios'), namespace='servicios')),
-    path('accounts/', include('django.contrib.auth.urls')),  # Habilita login/logout/password reset
-  
-   
-
+    path('productos/', include('productos.urls')),
+    path('servicios/', include(('servicios.urls', 'servicios'), namespace='servicios')),
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('api/products/', include(('productos.urls', 'productos'), namespace='productos_api')),
 ]
 
 # Configuración para servir archivos de medios durante el desarrollo

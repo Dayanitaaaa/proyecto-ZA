@@ -40,6 +40,12 @@ from django.template.loader import render_to_string
 import io
 from xhtml2pdf import pisa
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import LoginSerializer, RegisterSerializer
+from .serializers import CategoriaSerializer
+
 # --- FUNCIÓNES DE AYUDA ---
 
 User = get_user_model()
@@ -918,7 +924,7 @@ def search_results(request):
         )
         # Buscar por nombre de categoría si no hay resultados directos
         if not resultados.exists():
-            categoria = Categoria.objects.filter(nombre__icontains=query).first()
+            categoria = Categoria.objects.filter(nombre__icontains(query)).first()
             if categoria:
                 resultados = Producto.objects.filter(categoria=categoria)
     context = {
@@ -1088,3 +1094,45 @@ def descargar_entradas_salidas_pdf(request):
     response['Content-Disposition'] = 'attachment; filename="entradas_salidas.pdf"'
     pisa.CreatePDF(io.BytesIO(html.encode('utf-8')), dest=response)
     return response
+
+class LoginAPIView(APIView):
+    """API para login de usuario usando DRF."""
+    def post(self, request, *args, **kwargs):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            return Response({'success': True, 'user_id': user.id, 'username': user.username})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class RegisterAPIView(APIView):
+    """API para registro de usuario usando DRF."""
+    def post(self, request, *args, **kwargs):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            # Enviar correo de bienvenida igual que en register_view
+            try:
+                email_subject = "¡Bienvenido a Tejidos a Mano!"
+                html_message = render_to_string('core/email/registro_confirmacion.html', {
+                    'username': user.username,
+                    'email': user.email,
+                })
+                plain_message = strip_tags(html_message)
+                email = EmailMessage(
+                    email_subject,
+                    plain_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                )
+                email.content_subtype = "html"
+                email.send()
+            except Exception as e:
+                pass  # Puedes loguear el error si lo deseas
+            return Response({'success': True, 'user_id': user.id, 'username': user.username}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CategoriaListAPIView(APIView):
+    def get(self, request):
+        categorias = Categoria.objects.all()
+        serializer = CategoriaSerializer(categorias, many=True)
+        return Response(serializer.data)

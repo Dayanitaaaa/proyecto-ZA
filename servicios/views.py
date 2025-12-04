@@ -9,6 +9,11 @@ from .models import Servicio, InscripcionCurso # Importamos el nuevo modelo Insc
 # Necesitarás crear estos formularios en servicios/forms.py
 from .forms import InscripcionCursoForm, ServicioForm
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import InscripcionCursoSerializer
+
 
 # --- VISTAS PÚBLICAS (EXISTENTES Y MODIFICADAS) ---
 
@@ -149,6 +154,15 @@ def inscripciones_curso_admin(request, pk):
         'titulo_pagina': f'Inscripciones para: {curso.nombre}',
     }
     return render(request, 'servicios/admin/inscripciones_curso.html', context)
+
+
+class InscripcionCursoAPIView(APIView):
+    def post(self, request):
+        serializer = InscripcionCursoSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'success': True}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # Vistas principales para la gestión de servicios/cursos e inscripciones.
 # Cada vista debe tener un comentario explicativo sobre su propósito y uso.

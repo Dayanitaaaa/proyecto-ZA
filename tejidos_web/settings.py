@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-uya5-x+r0lblb-=$7p3-+6k3-(fy1zsgdomnd4&81*2izp0an6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['10.0.2.2', '127.0.0.1', 'localhost', '0.0.0.0']
 
 
 # Application definition
@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'crispy_forms',
     # Si usas el paquete bootstrap5 para crispy-forms (muy común):
     'crispy_bootstrap5', # Si lo usas, asegúrate de haberlo instalado con pip también
+    # Django REST Framework
+    'rest_framework',
 ]
 
 MIDDLEWARE = [

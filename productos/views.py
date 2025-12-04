@@ -4,6 +4,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from .models import Producto, Categoria 
 from decimal import Decimal
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .serializers import ProductoSerializer
 
 # UMBRAL DE BAJO STOCK
 UMBRAL_BAJO_STOCK = 5  # Debe ser igual al de core/views.py
@@ -86,4 +89,11 @@ def add_to_cart_simple(request, product_id):
     messages.success(request, f"'{product.nombre}' ha sido agregado a tu carrito.")
     # Redirige a la misma página para que el usuario siga comprando
     return redirect(request.META.get('HTTP_REFERER', 'core:home'))
+
+
+class ProductoListAPIView(APIView):
+    def get(self, request):
+        productos = Producto.objects.all()
+        serializer = ProductoSerializer(productos, many=True)
+        return Response(serializer.data)
 
