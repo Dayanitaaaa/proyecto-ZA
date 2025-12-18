@@ -89,7 +89,9 @@ urlpatterns = [
     path('favoritos/quitar/<int:producto_id>/', views.quitar_favorito, name='quitar_favorito'),
 
     # API REST para login
-    path('api/login/', views.LoginAPIView.as_view(), name='api_login'),
-    path('api/register/', views.RegisterAPIView.as_view(), name='api_register'),
+    path('api/login/', views.LoginView.as_view(), name='api_login'),
+    path('api/register/', views.UserRegisterAPIView.as_view(), name='api_register'),
     path('api/categorias/', views.CategoriaListAPIView.as_view(), name='api_categorias'),
+    path('api/categorias/<int:pk>/productos/', views.ProductoPorCategoriaAPIView.as_view(), name='api_productos_por_categoria'),
+    path('api/users/<int:pk>/', views.UserDetailAPIView.as_view(), name='api_user_detail'),
 ]

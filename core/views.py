@@ -43,8 +43,30 @@ from xhtml2pdf import pisa
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import LoginSerializer, RegisterSerializer
-from .serializers import CategoriaSerializer
+from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
+from .serializers import CategoriaSerializer, ProductoSerializer
+from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated
+
+class LoginView(APIView):
+    def post(self, request, *args, **kwargs):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(username=username, password=password)
+
+        if user:
+            token, _ = Token.objects.get_or_create(user=user)
+            
+            # Aquí está la magia: usamos el serializador para obtener los datos
+            user_data = UserSerializer(user).data
+            
+            # Devolvemos una respuesta con el token y los datos completos del usuario
+            return Response({
+                'token': token.key,
+                'user': user_data 
+            })
+            
+        return Response({'error': 'Invalid Credentials'}, status=400)
 
 # --- FUNCIÓNES DE AYUDA ---
 
@@ -1095,22 +1117,13 @@ def descargar_entradas_salidas_pdf(request):
     pisa.CreatePDF(io.BytesIO(html.encode('utf-8')), dest=response)
     return response
 
-class LoginAPIView(APIView):
-    """API para login de usuario usando DRF."""
-    def post(self, request, *args, **kwargs):
-        serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-            return Response({'success': True, 'user_id': user.id, 'username': user.username})
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class RegisterAPIView(APIView):
+class UserRegisterAPIView(APIView):
     """API para registro de usuario usando DRF."""
     def post(self, request, *args, **kwargs):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            # Enviar correo de bienvenida igual que en register_view
+            # Enviar correo de bienvenida
             try:
                 email_subject = "¡Bienvenido a Tejidos a Mano!"
                 html_message = render_to_string('core/email/registro_confirmacion.html', {
@@ -1127,8 +1140,12 @@ class RegisterAPIView(APIView):
                 email.content_subtype = "html"
                 email.send()
             except Exception as e:
-                pass  # Puedes loguear el error si lo deseas
-            return Response({'success': True, 'user_id': user.id, 'username': user.username}, status=status.HTTP_201_CREATED)
+                print(f"Error enviando correo de registro: {e}")
+
+            return Response(
+                {'message': f'Usuario {user.username} registrado exitosamente!'},
+                status=status.HTTP_201_CREATED
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CategoriaListAPIView(APIView):
@@ -1136,3 +1153,46 @@ class CategoriaListAPIView(APIView):
         categorias = Categoria.objects.all()
         serializer = CategoriaSerializer(categorias, many=True)
         return Response(serializer.data)
+
+class ProductoPorCategoriaAPIView(APIView):
+    def get(self, request, pk):
+        try:
+            categoria = Categoria.objects.get(pk=pk)
+            productos = Producto.objects.filter(categoria=categoria)
+            serializer = ProductoSerializer(productos, many=True)
+            return Response(serializer.data)
+        except Categoria.DoesNotExist:
+            return Response({"error": "Categoría no encontrada"}, status=status.HTTP_404_NOT_FOUND)
+
+class UserDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        if request.user != user:
+            return Response({'error': 'No tienes permiso para ver este perfil.'}, status=status.HTTP_403_FORBIDDEN)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        if request.user != user:
+            return Response({'error': 'No tienes permiso para editar este perfil.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = UserSerializer(user, data=request.data, partial=True) # partial=True permite actualizaciones parciales
+        if serializer.is_valid():
+            serializer.save()
+            # Si se incluye una nueva contraseña, actualízala de forma segura
+            if 'password' in request.data and request.data['password']:
+                user.set_password(request.data['password'])
+                user.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        if request.user != user:
+            return Response({'error': 'No tienes permiso para eliminar esta cuenta.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        user.delete()
+        return Response({'message': 'Usuario eliminado exitosamente.'}, status=status.HTTP_204_NO_CONTENT)

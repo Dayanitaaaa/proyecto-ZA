@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap5', # Si lo usas, asegúrate de haberlo instalado con pip también
     # Django REST Framework
     'rest_framework',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -149,3 +150,10 @@ SERVER_EMAIL = EMAIL_HOST_USER # Email para errores del servidor
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5" # O "bootstrap4" si usas Bootstrap 4
 CRISPY_TEMPLATE_PACK = "bootstrap5" # O "bootstrap4" si usas Bootstrap 4
+
+# Configuración de Django REST Framework para usar autenticación por token
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}
