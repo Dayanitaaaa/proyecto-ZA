@@ -7,7 +7,7 @@ Plataforma de e-commerce para la venta de zapatillas tejidas a mano.
 - Sistema de carrito de compras
 - Gestión de pedidos
 - Panel de administración
-- Responsive design
+- Diseño responsive
 
 ## Instalación
 1. Activar entorno virtual: `source .venv/bin/activate`
