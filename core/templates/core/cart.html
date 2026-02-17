@@ -20,53 +20,53 @@
                 <tbody>
                     {% for item in productos_en_carrito %}
                     <tr>
-                        <td style="vertical-align:middle;">
-                            <div class="d-flex align-items-center gap-3" style="padding:12px 0;">
-                                <div style="background:#f8f8f8; border-radius:1.2rem; border:1px solid #bbb; width:140px; height:140px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 12px rgba(0,0,0,0.09);">
+                        <td class="cart-va-middle">
+                            <div class="d-flex align-items-center gap-3 cart-item-row">
+                                <div class="cart-item-image-frame">
                                     {% if item.product.imagen_principal %}
-                                        <img src="{{ item.product.imagen_principal.url }}" alt="{{ item.product.nombre }}" style="max-width:120px; max-height:120px; object-fit:contain;">
+                                        <img src="{{ item.product.imagen_principal.url }}" alt="{{ item.product.nombre }}" class="cart-item-image">
                                     {% else %}
-                                        <img src="{% static 'img/placeholder.png' %}" alt="Imagen no disponible" style="max-width:120px; max-height:120px; object-fit:contain;">
+                                        <img src="{% static 'img/placeholder.png' %}" alt="Imagen no disponible" class="cart-item-image">
                                     {% endif %}
                                 </div>
-                                <div style="padding-left:18px; border-left:1px solid #ddd; min-width:220px;">
-                                    <div style="font-size:1.13rem; font-weight:600; letter-spacing:0.5px; margin-bottom:8px;">{{ item.product.nombre }}</div>
+                                <div class="cart-item-info">
+                                    <div class="cart-item-name">{{ item.product.nombre }}</div>
                                     {% if item.bajo_stock %}
                                         <span class="badge bg-warning">Bajo en stock</span>
                                     {% endif %}
                                     {% if item.colores_list %}
-                                        <div style="font-size:1.01rem; color:#222; margin-bottom:8px;">
+                                        <div class="cart-item-colors">
                                             {% for color in item.colores_list %}
-                                                <span style="border-right:1px solid #aaa; padding-right:12px; margin-right:12px;">{{ color }}</span>
+                                                <span class="cart-item-color">{{ color }}</span>
                                             {% endfor %}
                                         </div>
                                     {% endif %}
                                     {% if item.product.tallas %}
-                                        <div style="font-size:0.99rem; color:#222; margin-bottom:8px;">TALLAS: {{ item.product.tallas }}</div>
+                                        <div class="cart-item-sizes">TALLAS: {{ item.product.tallas }}</div>
                                     {% endif %}
                                 </div>
                             </div>
                         </td>
-                        <td style="vertical-align:middle;">${{ item.precio_unitario|floatformat:2 }}</td>
-                        <td style="vertical-align:middle;">
+                        <td class="cart-va-middle">${{ item.precio_unitario|floatformat:2 }}</td>
+                        <td class="cart-va-middle">
                             {% if item.bajo_stock %}
                                 <span class="badge bg-warning">No disponible</span>
                             {% else %}
                                 <form action="{% url 'core:update_cart' %}" method="post" class="d-flex align-items-center">
                                     {% csrf_token %}
                                     <input type="hidden" name="product_id" value="{{ item.product.id }}">
-                                    <input type="number" name="cantidad" value="{{ item.cantidad }}" min="1" max="{{ item.product.stock }}" class="form-control form-control-sm text-center" style="width: 70px;">
-                                    <button type="submit" class="btn btn-sm btn-outline-primary ms-2" title="Actualizar Cantidad">
-                                        <i class="fas fa-sync-alt"></i>
+                                    <input type="number" name="cantidad" value="{{ item.cantidad }}" min="1" max="{{ item.product.stock }}" class="form-control form-control-sm text-center cart-qty-input" aria-label="Cantidad" title="Cantidad">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary ms-2" title="Actualizar Cantidad" aria-label="Actualizar cantidad">
+                                        <i class="fas fa-sync-alt" aria-hidden="true"></i>
                                     </button>
                                 </form>
                             {% endif %}
                         </td>
-                        <td style="vertical-align:middle;">${{ item.subtotal|floatformat:2 }}</td>
-                        <td style="vertical-align:middle;">
+                        <td class="cart-va-middle">${{ item.subtotal|floatformat:2 }}</td>
+                        <td class="cart-va-middle">
                             {% if not item.bajo_stock %}
-                                <a href="{% url 'core:remove_from_cart' item.product.id %}" class="btn btn-sm btn-danger" title="Eliminar Producto">
-                                    <i class="fas fa-trash-alt"></i>
+                                <a href="{% url 'core:remove_from_cart' item.product.id %}" class="btn btn-sm btn-danger" title="Eliminar Producto" aria-label="Eliminar producto">
+                                    <i class="fas fa-trash-alt" aria-hidden="true"></i>
                                 </a>
                             {% else %}
                                 <span class="text-muted">No disponible</span>

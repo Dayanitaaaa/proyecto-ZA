@@ -521,6 +521,74 @@ a:hover {
    DÓNDE ESTÁ EN HTML: Aplica a todas las etiquetas `<a>` en cualquier vista al hacer hover. */
 
 
+.cart-va-middle {
+    vertical-align: middle;
+}
+
+.cart-item-row {
+    padding: 12px 0;
+}
+
+.cart-item-image-frame {
+    background: #f8f8f8;
+    border-radius: 1.2rem;
+    border: 1px solid #bbb;
+    width: 140px;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.09);
+}
+
+.cart-item-image {
+    max-width: 120px;
+    max-height: 120px;
+    object-fit: contain;
+}
+
+.cart-item-info {
+    padding-left: 18px;
+    border-left: 1px solid #ddd;
+    min-width: 220px;
+}
+
+.cart-item-name {
+    font-size: 1.13rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.cart-item-colors {
+    font-size: 1.01rem;
+    color: #222;
+    margin-bottom: 8px;
+}
+
+.cart-item-color {
+    border-right: 1px solid #aaa;
+    padding-right: 12px;
+    margin-right: 12px;
+}
+
+.cart-item-color:last-child {
+    border-right: none;
+    padding-right: 0;
+    margin-right: 0;
+}
+
+.cart-item-sizes {
+    font-size: 0.99rem;
+    color: #222;
+    margin-bottom: 8px;
+}
+
+.cart-qty-input {
+    width: 70px;
+}
+
+
 /* --- Estilos de la Barra de Navegación (Navbar) --- */
 
 /* Aplica al `<a class="navbar-brand">` dentro de la `<nav>` en `base.html`. */

@@ -35,20 +35,22 @@
                             <li class="nav-item"><a href="{% url 'core:contact' %}" class="nav-link fw-bold">CONTACTO</a></li>
                         </ul>
                         <div class="d-flex align-items-center navbar-icons ms-lg-3 mb-2 mb-lg-0">
-                            <button class="btn bg-transparent p-0 me-2" type="button" data-bs-toggle="collapse" data-bs-target="#searchBarCollapse" aria-expanded="false" aria-controls="searchBarCollapse">
-                                <i class="fas fa-search fs-4"></i>
+                            <button class="btn bg-transparent p-0 me-2" type="button" data-bs-toggle="collapse" data-bs-target="#searchBarCollapse" aria-expanded="false" aria-controls="searchBarCollapse" aria-label="Abrir búsqueda">
+                                <i class="fas fa-search fs-4" aria-hidden="true"></i>
                             </button>
                             <div class="collapse mt-2" id="searchBarCollapse">
                                 <form class="d-flex" role="search" method="get" action="{% url 'core:search_results' %}" style="min-width:180px; max-width:320px;">
                                     <input class="form-control me-2" type="search" name="q" placeholder="Buscar..." aria-label="Buscar">
-                                    <button class="btn btn-outline-primary" type="submit"><i class="fas fa-search"></i></button>
+                                    <button class="btn btn-outline-primary" type="submit" aria-label="Buscar">
+                                        <i class="fas fa-search" aria-hidden="true"></i>
+                                    </button>
                                 </form>
                             </div>
-                            <a href="{% url 'core:cart_view' %}" class="me-2" title="Carrito">
-                                <i class="fas fa-shopping-cart fs-4"></i>
+                            <a href="{% url 'core:cart_view' %}" class="me-2" title="Carrito" aria-label="Carrito">
+                                <i class="fas fa-shopping-cart fs-4" aria-hidden="true"></i>
                             </a>
-                            <a href="{% url 'core:favoritos' %}" class="me-2" title="Favoritos">
-                                <i class="fas fa-star fs-4" style="color: #FFD700;"></i>
+                            <a href="{% url 'core:favoritos' %}" class="me-2" title="Favoritos" aria-label="Favoritos">
+                                <i class="fas fa-star fs-4" style="color: #FFD700;" aria-hidden="true"></i>
                             </a>
                         </div>
                         <div class="d-flex align-items-center navbar-user ms-lg-2 mb-2 mb-lg-0">
@@ -67,11 +69,11 @@
                                     </ul>
                                 </div>
                             {% else %}
-                                <a href="{% url 'core:login' %}" class="me-2 fw-bold text-dark text-decoration-none">
-                                    <i class="fas fa-sign-in-alt me-1"></i> 
+                                <a href="{% url 'core:login' %}" class="me-2 fw-bold text-dark text-decoration-none" aria-label="Iniciar sesión" title="Iniciar sesión">
+                                    <i class="fas fa-sign-in-alt me-1" aria-hidden="true"></i> 
                                 </a>
-                                <a href="{% url 'core:register' %}" class="fw-bold text-dark text-decoration-none">
-                                    <i class="fas fa-user-plus me-1"></i> 
+                                <a href="{% url 'core:register' %}" class="fw-bold text-dark text-decoration-none" aria-label="Registrarse" title="Registrarse">
+                                    <i class="fas fa-user-plus me-1" aria-hidden="true"></i> 
                                 </a>
                             {% endif %}
                         </div>

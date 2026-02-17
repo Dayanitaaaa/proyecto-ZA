@@ -1,0 +1,35 @@
+# Entornos virtuales
+venv/
+.venv/
+
+# Base de datos
+db.sqlite3
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Archivos del sistema
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Archivos de medios (si se prefieren subir por separado)
+media/
+
+# Archivos de configuración sensibles
+.env
+settings/local.py
+
+# Archivos de compilación
+*.pyo
+*.pyd
+.Python
+
+# Logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.temp
